@@ -1,0 +1,190 @@
+<div class="p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
+        Propriétés
+      </h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        {{ filteredProperties.length }} propriété(s) trouvée(s)
+      </p>
+    </div>
+
+    <app-button (btnClick)="navigateToCreate()">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nouvelle propriété
+    </app-button>
+  </div>
+
+  <!-- Filtres et recherche -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+    <!-- Barre de recherche -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        Rechercher
+      </label>
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Rechercher par nom, ville..."
+          class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+        />
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Type de propriété -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Type de propriété
+        </label>
+        <select
+          [(ngModel)]="filterPropertyType"
+          (ngModelChange)="applyFilters()"
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+          <option value="">Tous les types</option>
+          <option *ngFor="let type of propertyTypes" [value]="type">
+            {{ getPropertyTypeLabel(type) }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Statut -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Statut
+        </label>
+        <select
+          [(ngModel)]="filterStatus"
+          (ngModelChange)="applyFilters()"
+          class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+          <option value="">Tous les statuts</option>
+          <option *ngFor="let status of propertyStatuses" [value]="status">
+            {{ getStatusLabel(status) }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+  <div class="flex items-center justify-center py-12">
+    <div class="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+  }
+
+  <!-- Error State -->
+  @if (error) {
+  <div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+    <p class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+  </div>
+  }
+
+  <!-- Empty State -->
+  @if (!isLoading && !error && filteredProperties.length === 0) {
+  <div class="text-center py-12">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+    </svg>
+    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucune propriété trouvée</h3>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Commencez par créer une nouvelle propriété.</p>
+    <div class="mt-6">
+      <app-button (btnClick)="navigateToCreate()">
+        Créer une propriété
+      </app-button>
+    </div>
+  </div>
+  }
+
+  <!-- Grille de cartes -->
+  @if (!isLoading && !error && filteredProperties.length > 0) {
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <app-property-card
+      *ngFor="let property of getPaginatedProperties()"
+      [property]="property"
+      (cardClick)="onPropertyClick($event)">
+    </app-property-card>
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-6">
+    <div class="flex-1 flex justify-between sm:hidden">
+      <button
+        (click)="prevPage()"
+        [disabled]="currentPage === 1"
+        class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+        Précédent
+      </button>
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages"
+        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+        Suivant
+      </button>
+    </div>
+
+    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+      <div>
+        <p class="text-sm text-gray-700 dark:text-gray-300">
+          Affichage de
+          <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span>
+          à
+          <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredProperties.length) }}</span>
+          sur
+          <span class="font-medium">{{ filteredProperties.length }}</span>
+          résultats
+        </p>
+      </div>
+
+      <div>
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+          <!-- Previous Button -->
+          <button
+            (click)="prevPage()"
+            [disabled]="currentPage === 1"
+            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+
+          <!-- Page Numbers -->
+          <button
+            *ngFor="let page of getPageNumbers()"
+            (click)="goToPage(page)"
+            [class.bg-brand-500]="page === currentPage"
+            [class.text-white]="page === currentPage"
+            [class.bg-white]="page !== currentPage"
+            [class.dark:bg-gray-800]="page !== currentPage"
+            [class.text-gray-700]="page !== currentPage"
+            [class.dark:text-gray-300]="page !== currentPage"
+            class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">
+            {{ page }}
+          </button>
+
+          <!-- Next Button -->
+          <button
+            (click)="nextPage()"
+            [disabled]="currentPage === totalPages"
+            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+  }
+</div>

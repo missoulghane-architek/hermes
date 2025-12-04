@@ -1,0 +1,63 @@
+<div
+  (click)="onCardClick()"
+  class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 cursor-pointer">
+
+  <!-- Image principale -->
+  <div class="relative h-48 overflow-hidden">
+    <img
+      [src]="mainImage"
+      [alt]="property.name"
+      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+      onerror="this.src='/assets/images/property-placeholder.jpg'">
+
+    <!-- Badge de statut -->
+    <div class="absolute top-3 right-3">
+      <span
+        [ngClass]="statusBadgeClass"
+        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium">
+        {{ statusLabel }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Contenu de la carte -->
+  <div class="p-4 space-y-3">
+    <!-- Nom de la propriété -->
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
+      {{ property.name }}
+    </h3>
+
+    <!-- Informations -->
+    <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+      <!-- Superficie -->
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+        </svg>
+        <span class="font-medium">{{ property.area }} m²</span>
+      </div>
+
+      <!-- Localisation -->
+      <div class="flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <span class="truncate">{{ property.address.city }}</span>
+      </div>
+    </div>
+
+    <!-- Type de propriété -->
+    <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+      <span class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        {{ property.propertyType }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Hover overlay -->
+  <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+</div>
