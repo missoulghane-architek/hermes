@@ -1,10 +1,19 @@
 package com.m2it.hermes.infrastructure.persistence.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "files")
@@ -17,6 +26,12 @@ public class FileEntity {
     @Id
     private UUID id;
 
+    @Column(nullable = false, length = 10)
+    private String bucketType;
+
+     @Column(nullable = false)
+    private UUID refId;
+
     @Column(nullable = false, length = 255)
     private String name;
 
@@ -28,9 +43,6 @@ public class FileEntity {
 
     @Column
     private Long size;
-
-    @Column(name = "property_id")
-    private UUID propertyId;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

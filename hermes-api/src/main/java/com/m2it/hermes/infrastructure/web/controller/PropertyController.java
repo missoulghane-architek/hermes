@@ -27,6 +27,7 @@ import com.m2it.hermes.application.port.in.FileUseCase;
 import com.m2it.hermes.application.port.in.PropertyUseCase;
 import com.m2it.hermes.application.port.in.UpdatePropertyCommand;
 import com.m2it.hermes.domain.exception.UserNotFoundException;
+import com.m2it.hermes.domain.model.File;
 import com.m2it.hermes.domain.model.Property;
 import com.m2it.hermes.domain.model.PropertyStatus;
 import com.m2it.hermes.domain.model.PropertyType;
@@ -40,6 +41,7 @@ import com.m2it.hermes.infrastructure.web.dto.UpdatePropertyRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -95,7 +97,22 @@ public class PropertyController {
     @PostMapping(value = "/with-pictures", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Créer un nouveau bien immobilier avec des fichiers",
-            description = "Crée un nouveau bien immobilier avec ses détails, son adresse et télécharge des fichiers (images) associés à la propriété"
+            description = """
+                    Crée un nouveau bien immobilier avec ses détails, son adresse et télécharge des fichiers (images) associés à la propriété.
+
+                    **Important pour Swagger UI:**
+                    - Pour 'property': Collez votre JSON directement (sans guillemets supplémentaires)
+                    - Pour 'files': Sélectionnez un ou plusieurs fichiers
+                    """,
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                content = @Content(
+                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                    encoding = {
+                        @Encoding(name = "property", contentType = MediaType.APPLICATION_JSON_VALUE),
+                        @Encoding(name = "files", contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                    }
+                )
+            )
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Bien créé avec succès et fichiers téléchargés",
@@ -103,10 +120,8 @@ public class PropertyController {
             @ApiResponse(responseCode = "400", description = "Données invalides", content = @Content)
     })
     public ResponseEntity<PropertyResponse> createPropertyWithPictures(
-            @Parameter(description = "Données de la propriété au format JSON", required = true)
-            @RequestPart("property") @Valid CreatePropertyRequest request,
-            @Parameter(description = "Fichiers à télécharger", required = true)
-            @RequestPart("files") MultipartFile[] files,
+            @RequestPart(value = "property") @Valid CreatePropertyRequest request,
+            @RequestPart(value = "files", required = true) MultipartFile[] files,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         // Récupérer l'utilisateur
@@ -131,7 +146,7 @@ public class PropertyController {
         Property property = propertyUseCase.create(command);
 
         // Upload files using FileUseCase
-        fileUseCase.uploadFilesForProperty(property.getId(), files);
+        fileUseCase.uploadFiles("PROPERTY", property.getId(), files);
 
         // Récupérer la propriété mise à jour avec les fichiers
         Property updatedProperty = propertyUseCase.getById(property.getId());
@@ -336,18 +351,23 @@ public class PropertyController {
                     .build();
         }
 
-        // Load pictures from FileUseCase using property ID
-        List<FileResponse> picturesDto = fileUseCase.getFilesByProperty(property.getId()).stream()
-                .map(file -> FileResponse.builder()
-                        .id(file.getId())
+        List<FileResponse> picturesDto = new ArrayList<>();
+        
+        for(int i=0;i<property.getPicturesIds().size();i++) {
+                File file = fileUseCase.getFileById(property.getPicturesIds().get(i));
+                FileResponse response = FileResponse.builder()
+                .id(file.getId())
                         .name(file.getName())
                         .url(file.getUrl())
                         .contentType(file.getContentType())
                         .size(file.getSize())
                         .createdAt(file.getCreatedAt())
                         .updatedAt(file.getUpdatedAt())
-                        .build())
-                .collect(Collectors.toList());
+                        .build();
+                picturesDto.add(response);
+                
+
+        }
 
         return PropertyResponse.builder()
                 .id(property.getId())
