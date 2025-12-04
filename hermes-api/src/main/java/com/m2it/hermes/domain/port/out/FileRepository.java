@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public interface FileRepository {
     File save(File file);
+    File saveForProperty(File file, UUID propertyId);
     Optional<File> findById(UUID id);
     List<File> findByPropertyId(UUID propertyId);
     void delete(UUID id);

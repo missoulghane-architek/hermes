@@ -29,9 +29,8 @@ public class FileEntity {
     @Column
     private Long size;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "property_id")
-    private PropertyEntity property;
+    @Column(name = "property_id")
+    private UUID propertyId;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

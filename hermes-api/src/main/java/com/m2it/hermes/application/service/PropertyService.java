@@ -1,14 +1,24 @@
 package com.m2it.hermes.application.service;
-import com.m2it.hermes.application.port.in.*;
-import com.m2it.hermes.domain.exception.PropertyNotFoundException;
-import com.m2it.hermes.domain.model.*;
-import com.m2it.hermes.domain.port.out.PropertyRepository;
-import com.m2it.hermes.domain.valueobject.Address;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
-import java.util.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.m2it.hermes.application.port.in.CreatePropertyCommand;
+import com.m2it.hermes.application.port.in.PropertyUseCase;
+import com.m2it.hermes.application.port.in.UpdatePropertyCommand;
+import com.m2it.hermes.domain.exception.PropertyNotFoundException;
+import com.m2it.hermes.domain.model.Property;
+import com.m2it.hermes.domain.model.PropertyStatus;
+import com.m2it.hermes.domain.model.PropertyType;
+import com.m2it.hermes.domain.port.out.PropertyRepository;
+import com.m2it.hermes.domain.valueobject.Address;
+
+import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class PropertyService implements PropertyUseCase {
@@ -30,6 +40,26 @@ public class PropertyService implements PropertyUseCase {
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
             .build();
+        return propertyRepository.save(property);
+    }
+    @Override
+    @Transactional
+    public Property create(CreatePropertyCommand command, List<MultipartFile> pictures) {
+        Address address = new Address(command.getStreet(), command.getCity(), command.getPostalCode(), command.getCountry());
+        Property property = Property.builder()
+            .id(UUID.randomUUID())
+            .ownerId(command.getOwnerId())
+            .name(command.getName())
+            .description(command.getDescription())
+            .propertyType(command.getPropertyType())
+            .address(address)
+            .area(command.getArea())
+            .status(command.getStatus() != null ? command.getStatus() : PropertyStatus.AVAILABLE)
+            .photos(command.getPhotos() != null ? new ArrayList<>(command.getPhotos()) : new ArrayList<>())
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .build();
+        property = propertyRepository.save(property);
         return propertyRepository.save(property);
     }
     @Override

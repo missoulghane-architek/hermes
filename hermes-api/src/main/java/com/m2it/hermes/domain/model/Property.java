@@ -30,7 +30,7 @@ public class Property {
     private List<String> photos = new ArrayList<>();
 
     @Builder.Default
-    private List<File> pictures = new ArrayList<>();
+    private List<UUID> picturesIds = new ArrayList<>();
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

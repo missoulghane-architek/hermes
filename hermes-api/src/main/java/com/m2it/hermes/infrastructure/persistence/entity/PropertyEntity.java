@@ -51,10 +51,6 @@ public class PropertyEntity {
     @Builder.Default
     private List<String> photos = new ArrayList<>();
 
-    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<FileEntity> pictures = new ArrayList<>();
-
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

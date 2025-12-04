@@ -1,6 +1,9 @@
 package com.m2it.hermes.infrastructure.web.exception;
 
-import com.m2it.hermes.domain.exception.*;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -9,9 +12,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import com.m2it.hermes.domain.exception.InvalidEmailException;
+import com.m2it.hermes.domain.exception.InvalidTokenException;
+import com.m2it.hermes.domain.exception.PropertyNotFoundException;
+import com.m2it.hermes.domain.exception.UserAlreadyExistsException;
+import com.m2it.hermes.domain.exception.UserNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -90,28 +95,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    @ExceptionHandler(TenantNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleTenantNotFoundException(TenantNotFoundException ex) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.NOT_FOUND.value())
-                .error("Not Found")
-                .message(ex.getMessage())
-                .build();
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    @ExceptionHandler(TenantAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleTenantAlreadyExistsException(TenantAlreadyExistsException ex) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.CONFLICT.value())
-                .error("Conflict")
-                .message(ex.getMessage())
-                .build();
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
     @ExceptionHandler(PropertyNotFoundException.class)
     public ResponseEntity<ErrorResponse> handlePropertyNotFoundException(PropertyNotFoundException ex) {
         ErrorResponse error = ErrorResponse.builder()
@@ -121,28 +104,6 @@ public class GlobalExceptionHandler {
                 .message(ex.getMessage())
                 .build();
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    @ExceptionHandler(LeaseNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleLeaseNotFoundException(LeaseNotFoundException ex) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.NOT_FOUND.value())
-                .error("Not Found")
-                .message(ex.getMessage())
-                .build();
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    @ExceptionHandler(LeaseAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleLeaseAlreadyExistsException(LeaseAlreadyExistsException ex) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.CONFLICT.value())
-                .error("Conflict")
-                .message(ex.getMessage())
-                .build();
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

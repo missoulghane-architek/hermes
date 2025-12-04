@@ -2,8 +2,6 @@ package com.m2it.hermes.infrastructure.web.controller;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,14 +22,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.m2it.hermes.application.service.FileStorageService;
-import com.m2it.hermes.domain.exception.PropertyNotFoundException;
-import com.m2it.hermes.infrastructure.persistence.entity.FileEntity;
-import com.m2it.hermes.infrastructure.persistence.entity.PropertyEntity;
-import com.m2it.hermes.infrastructure.persistence.jpa.JpaFileRepository;
-import com.m2it.hermes.infrastructure.persistence.jpa.JpaPropertyRepository;
+import com.m2it.hermes.application.port.in.FileUseCase;
+import com.m2it.hermes.domain.model.File;
 import com.m2it.hermes.infrastructure.web.dto.FileResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,9 +44,7 @@ import lombok.RequiredArgsConstructor;
 @SecurityRequirement(name = "bearerAuth")
 public class FileController {
 
-    private final FileStorageService fileStorageService;
-    private final JpaFileRepository fileRepository;
-    private final JpaPropertyRepository propertyRepository;
+    private final FileUseCase fileUseCase;
 
     @PostMapping(value = "/upload/{propertyId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
@@ -72,37 +63,13 @@ public class FileController {
             @RequestPart("files") MultipartFile[] files,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        PropertyEntity property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new PropertyNotFoundException("Property not found with ID: " + propertyId));
+        List<File> uploadedFiles = fileUseCase.uploadFilesForProperty(propertyId, files);
 
-        List<FileResponse> uploadedFiles = new ArrayList<>();
+        List<FileResponse> responses = uploadedFiles.stream()
+                .map(this::toFileResponse)
+                .collect(Collectors.toList());
 
-        for (MultipartFile file : files) {
-            String storedFileName = fileStorageService.storeFile(file);
-
-            String fileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/api/files/download/")
-                    .path(storedFileName)
-                    .toUriString();
-
-            FileEntity fileEntity = FileEntity.builder()
-                    .id(UUID.randomUUID())
-                    .name(file.getOriginalFilename())
-                    .url(fileUrl)
-                    .contentType(file.getContentType())
-                    .size(file.getSize())
-                    .property(property)
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
-                    .build();
-
-            fileEntity = fileRepository.save(fileEntity);
-
-            FileResponse response = toFileResponse(fileEntity);
-            uploadedFiles.add(response);
-        }
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(uploadedFiles);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 
     @GetMapping("/download/{fileName:.+}")
@@ -119,7 +86,7 @@ public class FileController {
             @PathVariable String fileName) {
 
         try {
-            Path filePath = fileStorageService.getFilePath(fileName);
+            Path filePath = fileUseCase.getFilePath(fileName);
             Resource resource = new UrlResource(filePath.toUri());
 
             if (!resource.exists() || !resource.isReadable()) {
@@ -150,7 +117,7 @@ public class FileController {
             @PathVariable UUID propertyId,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        List<FileEntity> files = fileRepository.findByPropertyId(propertyId);
+        List<File> files = fileUseCase.getFilesByProperty(propertyId);
         List<FileResponse> responses = files.stream()
                 .map(this::toFileResponse)
                 .collect(Collectors.toList());
@@ -172,17 +139,11 @@ public class FileController {
             @PathVariable UUID fileId,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        FileEntity file = fileRepository.findById(fileId)
-                .orElseThrow(() -> new RuntimeException("File not found with ID: " + fileId));
-
-        String fileName = file.getUrl().substring(file.getUrl().lastIndexOf("/") + 1);
-        fileStorageService.deleteFile(fileName);
-        fileRepository.deleteById(fileId);
-
+        fileUseCase.deleteFile(fileId);
         return ResponseEntity.noContent().build();
     }
 
-    private FileResponse toFileResponse(FileEntity file) {
+    private FileResponse toFileResponse(File file) {
         return FileResponse.builder()
                 .id(file.getId())
                 .name(file.getName())

@@ -1,14 +1,17 @@
 package com.m2it.hermes.application.port.in;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.web.multipart.MultipartFile;
+
 import com.m2it.hermes.domain.model.Property;
 import com.m2it.hermes.domain.model.PropertyStatus;
 import com.m2it.hermes.domain.model.PropertyType;
 
-import java.util.List;
-import java.util.UUID;
-
 public interface PropertyUseCase {
     Property create(CreatePropertyCommand command);
+    Property create(CreatePropertyCommand command, List<MultipartFile> pictures);
     Property update(UpdatePropertyCommand command);
     Property getById(UUID id);
     List<Property> getAll();

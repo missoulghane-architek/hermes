@@ -1,6 +1,5 @@
 package com.m2it.hermes.infrastructure.web.controller;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -22,23 +21,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.m2it.hermes.application.port.in.CreatePropertyCommand;
+import com.m2it.hermes.application.port.in.FileUseCase;
 import com.m2it.hermes.application.port.in.PropertyUseCase;
 import com.m2it.hermes.application.port.in.UpdatePropertyCommand;
-import com.m2it.hermes.application.service.FileStorageService;
-import com.m2it.hermes.domain.exception.PropertyNotFoundException;
 import com.m2it.hermes.domain.exception.UserNotFoundException;
 import com.m2it.hermes.domain.model.Property;
 import com.m2it.hermes.domain.model.PropertyStatus;
 import com.m2it.hermes.domain.model.PropertyType;
 import com.m2it.hermes.domain.model.User;
 import com.m2it.hermes.domain.port.out.UserRepository;
-import com.m2it.hermes.infrastructure.persistence.entity.FileEntity;
-import com.m2it.hermes.infrastructure.persistence.entity.PropertyEntity;
-import com.m2it.hermes.infrastructure.persistence.jpa.JpaFileRepository;
-import com.m2it.hermes.infrastructure.persistence.jpa.JpaPropertyRepository;
 import com.m2it.hermes.infrastructure.web.dto.CreatePropertyRequest;
 import com.m2it.hermes.infrastructure.web.dto.FileResponse;
 import com.m2it.hermes.infrastructure.web.dto.PropertyResponse;
@@ -64,9 +57,7 @@ public class PropertyController {
 
     private final PropertyUseCase propertyUseCase;
     private final UserRepository userRepository;
-    private final FileStorageService fileStorageService;
-    private final JpaFileRepository fileRepository;
-    private final JpaPropertyRepository propertyRepository;
+    private final FileUseCase fileUseCase;
 
     @PostMapping
     @Operation(summary = "Créer un nouveau bien immobilier", description = "Crée un nouveau bien immobilier avec ses détails et son adresse"
@@ -139,32 +130,8 @@ public class PropertyController {
 
         Property property = propertyUseCase.create(command);
 
-        // Récupérer l'entité PropertyEntity pour associer les fichiers
-        PropertyEntity propertyEntity = propertyRepository.findById(property.getId())
-                .orElseThrow(() -> new PropertyNotFoundException("Property not found with ID: " + property.getId()));
-
-        // Télécharger et associer les fichiers à la propriété
-        for (MultipartFile file : files) {
-            String storedFileName = fileStorageService.storeFile(file);
-
-            String fileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/api/files/download/")
-                    .path(storedFileName)
-                    .toUriString();
-
-            FileEntity fileEntity = FileEntity.builder()
-                    .id(UUID.randomUUID())
-                    .name(file.getOriginalFilename())
-                    .url(fileUrl)
-                    .contentType(file.getContentType())
-                    .size(file.getSize())
-                    .property(propertyEntity)
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
-                    .build();
-
-            fileRepository.save(fileEntity);
-        }
+        // Upload files using FileUseCase
+        fileUseCase.uploadFilesForProperty(property.getId(), files);
 
         // Récupérer la propriété mise à jour avec les fichiers
         Property updatedProperty = propertyUseCase.getById(property.getId());
@@ -369,18 +336,18 @@ public class PropertyController {
                     .build();
         }
 
-        List<FileResponse> picturesDto = property.getPictures() != null ?
-                property.getPictures().stream()
-                        .map(file -> FileResponse.builder()
-                                .id(file.getId())
-                                .name(file.getName())
-                                .url(file.getUrl())
-                                .contentType(file.getContentType())
-                                .size(file.getSize())
-                                .createdAt(file.getCreatedAt())
-                                .updatedAt(file.getUpdatedAt())
-                                .build())
-                        .collect(Collectors.toList()) : new ArrayList<>();
+        // Load pictures from FileUseCase using property ID
+        List<FileResponse> picturesDto = fileUseCase.getFilesByProperty(property.getId()).stream()
+                .map(file -> FileResponse.builder()
+                        .id(file.getId())
+                        .name(file.getName())
+                        .url(file.getUrl())
+                        .contentType(file.getContentType())
+                        .size(file.getSize())
+                        .createdAt(file.getCreatedAt())
+                        .updatedAt(file.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
 
         return PropertyResponse.builder()
                 .id(property.getId())

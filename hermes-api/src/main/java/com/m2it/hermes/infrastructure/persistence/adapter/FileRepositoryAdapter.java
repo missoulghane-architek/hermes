@@ -2,6 +2,7 @@ package com.m2it.hermes.infrastructure.persistence.adapter;
 
 import com.m2it.hermes.domain.model.File;
 import com.m2it.hermes.domain.port.out.FileRepository;
+import com.m2it.hermes.infrastructure.persistence.entity.FileEntity;
 import com.m2it.hermes.infrastructure.persistence.jpa.JpaFileRepository;
 import com.m2it.hermes.infrastructure.persistence.mapper.FileMapper;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,14 @@ public class FileRepositoryAdapter implements FileRepository {
     @Override
     public File save(File file) {
         return mapper.toDomain(jpaRepository.save(mapper.toEntity(file)));
+    }
+
+    @Override
+    public File saveForProperty(File file, UUID propertyId) {
+        FileEntity fileEntity = mapper.toEntity(file);
+        fileEntity.setPropertyId(propertyId);
+
+        return mapper.toDomain(jpaRepository.save(fileEntity));
     }
 
     @Override
