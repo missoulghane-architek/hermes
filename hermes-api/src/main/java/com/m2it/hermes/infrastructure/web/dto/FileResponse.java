@@ -1,13 +1,13 @@
 package com.m2it.hermes.infrastructure.web.dto;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Builder
@@ -18,6 +18,12 @@ public class FileResponse {
 
     @Schema(description = "Identifiant unique du fichier", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID id;
+
+    @Schema(description = "Nom du bucket", example = "PROPERTY")
+    private String bucket;
+
+    @Schema(description = "Id de l'objet associé", example = "123e4567-e89b-12d3-a456-426614174000")
+    private UUID refId;
 
     @Schema(description = "Nom du fichier", example = "photo-maison.jpg")
     private String name;

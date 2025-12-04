@@ -80,6 +80,8 @@ public class FileController {
     private FileResponse toFileResponse(File file) {
         return FileResponse.builder()
                 .id(file.getId())
+                .bucket(file.getBucket())
+                .refId(file.getRefId())
                 .name(file.getName())
                 .url(file.getUrl())
                 .contentType(file.getContentType())

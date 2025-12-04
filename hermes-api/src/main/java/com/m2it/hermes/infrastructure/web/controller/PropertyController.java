@@ -145,7 +145,7 @@ public class PropertyController {
 
         Property property = propertyUseCase.create(command);
 
-        // Upload files using FileUseCase
+        // Upload files using FileUseCase to the bucket PROPERTY with the Id of the property created
         fileUseCase.uploadFiles("PROPERTY", property.getId(), files);
 
         // Récupérer la propriété mise à jour avec les fichiers

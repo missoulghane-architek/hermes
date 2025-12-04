@@ -1,8 +1,9 @@
 package com.m2it.hermes.infrastructure.persistence.mapper;
 
+import org.springframework.stereotype.Component;
+
 import com.m2it.hermes.domain.model.File;
 import com.m2it.hermes.infrastructure.persistence.entity.FileEntity;
-import org.springframework.stereotype.Component;
 
 @Component
 public class FileMapper {
@@ -31,6 +32,8 @@ public class FileMapper {
         return File.builder()
                 .id(entity.getId())
                 .name(entity.getName())
+                .bucket(entity.getBucketType())
+                .refId(entity.getRefId())
                 .url(entity.getUrl())
                 .contentType(entity.getContentType())
                 .size(entity.getSize())
